@@ -1,0 +1,26 @@
+################################################################################
+# builder
+################################################################################
+FROM ubuntu:16.04 as builder
+
+ARG localbuild
+RUN if [ "x$localbuild" != "x" ]; then sed -i 's#http://archive.ubuntu.com/#http://tw.archive.ubuntu.com/#' /etc/apt/sources.list; fi
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates
+
+# nodejs
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+    && apt-get install -y nodejs
+
+# yarn
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+    && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
+    && apt-get update \
+    && apt-get install -y yarn
+
+# build frontend
+COPY web /src/web
+RUN cd /src/web \
+    && yarn \
+    && npm run build
